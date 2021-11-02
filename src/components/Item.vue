@@ -6,15 +6,25 @@
     @mouseleave="isEdit = false"
   >
     <div class="item__img">
-      <img
-        :src="`https://picsum.photos/id/1/300/180?grayscale&blur=5`"
-        alt=""
-      />
+      <div v-if="props.url === ''" class="item__card item__default">
+        <i class="el-icon" data-v-066465b6="" style="--font-size: 64px"
+          ><svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 1024 1024"
+            data-v-066465b6=""
+          >
+            <path
+              fill="currentColor"
+              d="M480 480V128a32 32 0 0 1 64 0v352h352a32 32 0 1 1 0 64H544v352a32 32 0 1 1-64 0V544H128a32 32 0 0 1 0-64h352z"
+            ></path></svg
+        ></i>
+      </div>
+      <img :src="props.url + '?grayscale&blur=5'" alt="" />
     </div>
     <div class="item__content">
       <div class="item__card item__view">
         <div :style="titleFontSize" class="item__view__title">
-          <span>{{ title }}</span>
+          <span>{{ props.title }}</span>
         </div>
       </div>
       <div class="item__card item__edit">
@@ -40,12 +50,21 @@ import { defineComponent, ref, computed } from "vue";
 
 export default defineComponent({
   name: "Item",
-  setup() {
-    const title = ref("Hello World");
+  props: {
+    url: {
+      type: String,
+      default: "",
+    },
+    title: {
+      type: String,
+      default: "",
+    },
+  },
+  setup(props) {
     let isEdit = ref(false);
 
     const titleFontSize = computed(() => {
-      const len = title.value.length;
+      const len = props.title.length;
       if (len < 15) {
         return {
           fontSize: "64px",
@@ -61,7 +80,7 @@ export default defineComponent({
       };
     });
     return {
-      title,
+      props,
       Plus,
       isEdit,
       titleFontSize,
@@ -94,6 +113,7 @@ export default defineComponent({
   border-radius: 10px;
   position: relative;
   overflow: hidden;
+  margin: 5px;
   &__content {
     @include fill();
     transition-duration: 0.3s;
@@ -104,6 +124,9 @@ export default defineComponent({
     @include centerFlex();
   }
   &__img {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
     @include center();
     filter: contrast(80%);
     transition-duration: 0.5s;
@@ -115,8 +138,10 @@ export default defineComponent({
       @include centerFlex();
     }
   }
-  &__edit {
+  &__edit,
+  &__default {
     cursor: pointer;
+    transition-duration: 0.5s;
     & .el-icon {
       color: #fff;
     }
@@ -130,11 +155,24 @@ export default defineComponent({
 }
 
 .is-edit {
-  & .item__content {
+  & .item__content,
+  & .item__default {
     transform: translateY(-100%);
   }
   & .item__img {
     filter: contrast(80%) brightness(50%);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 </style>
