@@ -26,6 +26,10 @@ export default defineComponent({
       type: String,
       default: "0",
     },
+    disable: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["select-image"],
   setup(props) {
@@ -37,11 +41,13 @@ export default defineComponent({
   },
   methods: {
     handleClick() {
+      if (this.disable && !this.isCheck) {
+        return;
+      }
       this.isCheck = !this.isCheck;
-      const val = this.isCheck
-        ? `https://picsum.photos/id/${this.props.id}/300/180`
-        : "";
-      this.$emit("select-image", val);
+      const val = `https://picsum.photos/id/${this.props.id}/300/180`;
+      const add = this.isCheck ? true : false;
+      this.$emit("select-image", val, add);
     },
   },
 });
@@ -56,6 +62,7 @@ export default defineComponent({
   margin: 5px;
   position: relative;
   cursor: pointer;
+  display: inline-block;
   &__cover {
     position: absolute;
     top: 0;

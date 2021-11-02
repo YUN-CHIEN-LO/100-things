@@ -1,20 +1,17 @@
 <template>
   <div class="page">
-    <Image />
-    <Item />
+    <Loader :max-num="3" />
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import Item from "@/components/Item.vue";
-import Image from "@/components/load-image/Image.vue";
+import Loader from "@/components/load-image/Loader.vue";
 
 export default defineComponent({
   name: "Home",
   components: {
-    Item,
-    Image,
+    Loader,
   },
 });
 </script>
