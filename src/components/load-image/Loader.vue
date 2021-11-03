@@ -5,8 +5,15 @@
         v-for="image in imageList.data"
         :key="image.id"
         :id="image.id"
+        :url="`https://picsum.photos/id/${image.id}/300/180`"
         :disable="disable"
-        :resetCheck="resetCheck"
+        :checked="
+          includeLodash(
+            props.value,
+            `https://picsum.photos/id/${image.id}/300/180`
+          )
+        "
+        :resetFlag="resetFlag"
         @select-image="handleSelect"
       />
     </div>
@@ -40,7 +47,7 @@ export default defineComponent({
     let imageList = reactive({ data: [] as any[] });
     let selectList = reactive({ data: [] as string[] });
     let disable = ref(false);
-    let resetCheck = ref(false);
+    let resetFlag = ref(false);
     watch(
       () => selectList.data,
       (newVal, oldVal) => {
@@ -48,12 +55,17 @@ export default defineComponent({
       },
       { deep: true }
     );
+    const includeLodash = (arr: any[], item: any) => {
+      return includes(arr, item);
+    };
     return {
+      props,
       pageNum,
       imageList,
       selectList,
       disable,
-      resetCheck,
+      includeLodash,
+      resetFlag,
     };
   },
 
@@ -77,7 +89,7 @@ export default defineComponent({
         });
     },
     handleSelect(url: string, add: boolean) {
-      this.resetCheck = false;
+      this.resetFlag = false;
       if (add && !includes(this.selectList.data, url)) {
         this.selectList.data.push(url);
       } else if (!add) {
@@ -87,7 +99,7 @@ export default defineComponent({
     },
     reset() {
       this.selectList.data = [];
-      this.resetCheck = true;
+      this.resetFlag = true;
     },
   },
 });

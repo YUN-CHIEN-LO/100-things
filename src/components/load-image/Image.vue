@@ -1,8 +1,10 @@
 <template>
   <div class="image" @click="handleClick">
-    <img :src="`https://picsum.photos/id/${props.id}/300/180`" alt="" />
+    <img :src="props.url" alt="" />
     <div
-      :class="{ 'is-check': !props.resetCheck && isCheck }"
+      :class="{
+        'is-check': props.checked || isCheck,
+      }"
       class="image__cover"
     >
       <div class="image__cover__item"></div>
@@ -29,17 +31,22 @@ export default defineComponent({
       type: String,
       default: "0",
     },
+    url: {
+      type: String,
+      defaule: "https://picsum.photos/id/0/300/180`",
+    },
     disable: {
       type: Boolean,
       default: false,
     },
-    resetCheck: Boolean,
+    checked: Boolean,
+    resetFlag: Boolean,
   },
   emits: ["select-image"],
   setup(props) {
     let isCheck = ref(false);
     watch(
-      () => props.resetCheck,
+      () => props.resetFlag,
       (newValue: boolean, oldValue: boolean) => {
         if (newValue === true) {
           isCheck.value = false;
