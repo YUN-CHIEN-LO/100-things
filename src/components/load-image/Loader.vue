@@ -75,6 +75,9 @@ export default defineComponent({
       }
       this.$emit("select", this.selectList.data);
     },
+    reset() {
+      this.selectList.data = [];
+    },
   },
 });
 </script>
