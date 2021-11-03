@@ -65,14 +65,14 @@ export default defineComponent({
 
     const titleFontSize = computed(() => {
       const len = props.title.length;
-      if (len < 15) {
+      if (len < 10) {
         return {
           fontSize: "64px",
         };
       }
-      if (len >= 15 && len < 30) {
+      if (len >= 15 && len < 25) {
         return {
-          fontSize: "32px",
+          fontSize: "48px",
         };
       }
       return {
@@ -136,6 +136,9 @@ export default defineComponent({
       @include center();
       color: #fff;
       @include centerFlex();
+      width: 100%;
+      padding: 10px;
+      word-break: break-all;
     }
   }
   &__edit,

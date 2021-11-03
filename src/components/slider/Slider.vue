@@ -3,6 +3,7 @@
     <div class="slider__content" :style="setSlide" ref="sliderContent">
       <slot></slot>
     </div>
+    <div class="slider__overlay" :class="{ 'is-end__overlay': isEnd }"></div>
     <div class="slider__btn slider__btn--prev" @click="handleSlide(-1)">
       <i class="el-icon" data-v-066465b6="" style="--font-size: 32px"
         ><svg
@@ -23,7 +24,7 @@
 
     <div
       class="slider__btn slider__btn--next"
-      :class="{ 'is-end': isEnd }"
+      :class="{ 'is-end': isEnd, 'is-disabled': disableNext }"
       @click="handleSlide(1)"
     >
       <i class="el-icon" data-v-066465b6="" style="--font-size: 32px"
@@ -50,6 +51,10 @@ export default defineComponent({
       type: String,
       default: "100%",
     },
+    disableNext: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     const num = ref(0);
@@ -68,21 +73,32 @@ export default defineComponent({
   },
   methods: {
     handleSlide(step) {
+      if (step === 1 && this.disableNext) {
+        return;
+      }
+      if (step === -1 && this.isEnd) {
+        this.isEnd = false;
+        return;
+      }
       if (this.isEnd) {
         this.$emit("slider:submit");
         this.reset();
-      } else if (this.num + step < 0) {
+        return;
+      }
+      if (this.num + step < 0) {
         this.$emit("slider", "start");
-      } else if (this.num + step === this.$refs.sliderContent.children.length) {
+        return;
+      }
+      if (this.num + step === this.$refs.sliderContent.children.length) {
         this.$emit("slider", "end");
         this.isEnd = true;
-      } else {
-        if (!this.isEnd) {
-          this.num += step;
-        }
-        this.$emit("slider", this.num);
-        this.isEnd = false;
+        return;
       }
+      if (!this.isEnd) {
+        this.num += step;
+      }
+      this.$emit("slider", this.num);
+      this.isEnd = false;
     },
     reset() {
       this.isEnd = false;
@@ -109,6 +125,7 @@ export default defineComponent({
     top: 50%;
     cursor: pointer;
     transition-duration: 0.1s;
+    z-index: 10;
     &:hover {
       background-color: #333;
       color: #eee;
@@ -130,7 +147,16 @@ export default defineComponent({
     display: flex;
     transition-duration: 0.3s;
   }
+  &__overlay {
+    width: 0%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
 }
+
 .is-end {
   left: 50%;
   transition-duration: 0.3s;
@@ -139,6 +165,7 @@ export default defineComponent({
   background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
   background-size: 400% 400%;
   animation: gradient 30s linear infinite;
+  box-shadow: 10px 10px rgba(0, 0, 0, 0.5);
   & .el-icon {
     transform: scale(0);
   }
@@ -151,8 +178,39 @@ export default defineComponent({
     left: 50%;
     color: #fff;
   }
+  &:before {
+    content: "";
+    transition: all 0.3s;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    height: 90%;
+    border: solid 1px #fff;
+    z-index: 9;
+  }
   &:hover {
-    transform: translate(-50%, -50%) rotate(45deg) scale(1.3);
+    box-shadow: 20px 20px rgba(0, 0, 0, 0.5);
+  }
+  &:hover::before {
+    transition-duration: 0.3;
+    border-radius: 100%;
+    border: double 10px #fff;
+    width: 110%;
+    height: 110%;
+  }
+  &__overlay {
+    width: 100%;
+  }
+}
+.is-disabled {
+  cursor: not-allowed;
+  background-color: #efefef;
+  color: #aaa;
+  &:hover {
+    background-color: #efefef;
+    color: #aaa;
   }
 }
 @keyframes gradient {

@@ -6,6 +6,7 @@
         :key="image.id"
         :id="image.id"
         :disable="disable"
+        :resetCheck="resetCheck"
         @select-image="handleSelect"
       />
     </div>
@@ -27,12 +28,19 @@ export default defineComponent({
   },
   props: {
     maxNum: Number,
+    value: {
+      type: Array as () => Array<string>,
+      default: () => {
+        return [];
+      },
+    },
   },
   setup(props) {
     let pageNum = ref(1);
     let imageList = reactive({ data: [] as any[] });
     let selectList = reactive({ data: [] as string[] });
     let disable = ref(false);
+    let resetCheck = ref(false);
     watch(
       () => selectList.data,
       (newVal, oldVal) => {
@@ -45,6 +53,7 @@ export default defineComponent({
       imageList,
       selectList,
       disable,
+      resetCheck,
     };
   },
 
@@ -68,6 +77,7 @@ export default defineComponent({
         });
     },
     handleSelect(url: string, add: boolean) {
+      this.resetCheck = false;
       if (add && !includes(this.selectList.data, url)) {
         this.selectList.data.push(url);
       } else if (!add) {
@@ -77,6 +87,7 @@ export default defineComponent({
     },
     reset() {
       this.selectList.data = [];
+      this.resetCheck = true;
     },
   },
 });

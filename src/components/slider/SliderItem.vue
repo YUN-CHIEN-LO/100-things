@@ -29,9 +29,16 @@ export default defineComponent({
   width: 100%;
   flex-shrink: 0;
   box-sizing: border-box;
-  padding: 20px 10px;
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  & h1 {
+    position: sticky;
+    top: 0;
+    background-color: #fff;
+    z-index: 10;
+    padding: 20px 0px;
+    margin: 0;
+  }
 }
 </style>

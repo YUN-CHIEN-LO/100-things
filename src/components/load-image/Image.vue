@@ -1,7 +1,10 @@
 <template>
   <div class="image" @click="handleClick">
     <img :src="`https://picsum.photos/id/${props.id}/300/180`" alt="" />
-    <div :class="{ 'is-check': isCheck }" class="image__cover">
+    <div
+      :class="{ 'is-check': !props.resetCheck && isCheck }"
+      class="image__cover"
+    >
       <div class="image__cover__item"></div>
       <div class="image__cover__item image__cover__check">
         <div class="check-icon">
@@ -17,8 +20,8 @@
   </div>
 </template>
 
-<script>
-import { defineComponent, ref } from "vue";
+<script lang="ts">
+import { defineComponent, ref, watch } from "vue";
 export default defineComponent({
   name: "Image",
   props: {
@@ -30,10 +33,19 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    resetCheck: Boolean,
   },
   emits: ["select-image"],
   setup(props) {
     let isCheck = ref(false);
+    watch(
+      () => props.resetCheck,
+      (newValue: boolean, oldValue: boolean) => {
+        if (newValue === true) {
+          isCheck.value = false;
+        }
+      }
+    );
     return {
       props,
       isCheck,
@@ -48,6 +60,9 @@ export default defineComponent({
       const val = `https://picsum.photos/id/${this.props.id}/300/180`;
       const add = this.isCheck ? true : false;
       this.$emit("select-image", val, add);
+    },
+    reset() {
+      this.isCheck = false;
     },
   },
 });
