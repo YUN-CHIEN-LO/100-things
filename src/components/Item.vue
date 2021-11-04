@@ -1,10 +1,5 @@
 <template>
-  <div
-    class="item"
-    :class="{ 'is-edit': isEdit }"
-    @mouseover="isEdit = true"
-    @mouseleave="isEdit = false"
-  >
+  <div class="item" :class="{ 'is-edit': isEdit }">
     <div class="item__img">
       <div v-if="props.url === ''" class="item__card item__default">
         <i class="el-icon" data-v-066465b6="" style="--font-size: 64px"
@@ -22,7 +17,11 @@
       <img v-if="props.color" :src="props.url" alt="" />
       <img v-if="!props.color" :src="props.url + '?grayscale&blur=5'" alt="" />
     </div>
-    <div class="item__content">
+    <div
+      class="item__content"
+      @mouseover="isEdit = true"
+      @mouseleave="isEdit = false"
+    >
       <div class="item__card item__view">
         <div :style="titleFontSize" class="item__view__title">
           <span>{{ props.title }}</span>
@@ -69,16 +68,33 @@
         </i>
       </div>
     </div>
+    <transition name="slide-fade">
+      <div
+        v-show="!props.lock"
+        class="item__info"
+        @click="(evt) => evt.stopPropagation()"
+      >
+        <span>
+          {{ props.sort }}
+        </span>
+        <el-icon :size="18" @click="handleDelete(evt, props.id)"
+          ><delete
+        /></el-icon>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script lang="ts">
-import { Plus } from "@element-plus/icons";
+import { Plus, Delete } from "@element-plus/icons";
 import { defineComponent, ref, computed } from "vue";
+import { ElIcon, ElMessageBox } from "element-plus";
 
 export default defineComponent({
   name: "Item",
+  components: { Delete, ElIcon },
   props: {
+    id: Number,
     url: {
       type: String,
       default: "",
@@ -96,18 +112,14 @@ export default defineComponent({
       default: false,
     },
     color: Boolean,
+    sort: Number,
   },
   setup(props) {
     let isEdit = ref(false);
 
     const titleFontSize = computed(() => {
       const len = props.title.length;
-      if (len < 10) {
-        return {
-          fontSize: "64px",
-        };
-      }
-      if (len >= 15 && len < 25) {
+      if (len < 15) {
         return {
           fontSize: "48px",
         };
@@ -122,6 +134,19 @@ export default defineComponent({
       isEdit,
       titleFontSize,
     };
+  },
+  methods: {
+    handleDelete(evt: any, id: number) {
+      ElMessageBox.confirm("Are you sure you want to delete this?", {
+        confirmButtonText: "Delete",
+      })
+        .then(() => {
+          this.$emit("item:delete", id);
+        })
+        .catch(() => {
+          // catch error
+        });
+    },
   },
 });
 </script>
@@ -151,9 +176,26 @@ export default defineComponent({
   position: relative;
   overflow: hidden;
   margin: 5px;
+  transition-duration: 0.3s;
+
   &__content {
     @include fill();
     transition-duration: 0.3s;
+  }
+  &__info {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px 20px;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
   }
   &__card {
     position: relative;
@@ -212,5 +254,15 @@ export default defineComponent({
   100% {
     background-position: 0% 50%;
   }
+}
+
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.1s cubic-bezier(1, 0.5, 0.8, 1);
+}
+.slide-fade-enter, .slide-fade-leave-to
+/* .slide-fade-leave-active below version 2.1.8 */ {
+  transform: translateY(-10px);
+  opacity: 0;
 }
 </style>

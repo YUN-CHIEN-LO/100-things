@@ -17,16 +17,25 @@
     </div>
     <div class="page__items">
       <Item
-        v-for="item in list.data"
+        v-for="(item, id) in list.data"
         :key="item.id"
+        :id="item.id"
+        :sort="id + 1"
         :title="item.title"
         :url="item.img"
         :color="item.complete"
         :complete="item.complete"
         :lock="lock"
         @click="handleItem(item)"
+        @item:delete="handleDelete"
       />
-      <Item v-show="!lock" :lock="true" @click="handleAdd" />
+      <transition name="slide-fade">
+        <Item
+          :style="{ width: lock ? '0' : '300px' }"
+          :lock="true"
+          @click="handleAdd"
+        />
+      </transition>
     </div>
     <el-drawer
       v-model="drawer"
@@ -38,7 +47,6 @@
       <Slider
         ref="slider"
         :disable-next="disableNextAdd"
-        :is-overlay="isOverlay"
         @slider:submit="handleSubmit"
         @slider="handleSlide"
       >
@@ -123,6 +131,25 @@
         </SliderItem>
       </Slider>
     </el-drawer>
+    <el-dialog v-model="dialog" title="Start A Project" width="100%">
+      <div class="page__dialog">
+        <div class="page__dialog__block">
+          <div class="page__dialog__block__inner">
+            <el-select v-model="genNum">
+              <el-option v-for="item in genOptions" :key="item" :value="item">
+              </el-option>
+            </el-select>
+            <span @click="generateAll">Generate For Me!</span>
+          </div>
+        </div>
+        <div class="page__dialog__block page__dialog--right">
+          <div class="page__dialog__block__inner" @click="dialog = false">
+            <span>Create My Own!</span>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
+    <div :class="{ page__overlay: isOverlay }"></div>
   </div>
 </template>
 
@@ -132,7 +159,13 @@ import Loader from "@/components/load-image/Loader.vue";
 import Item from "@/components/Item.vue";
 import Slider from "@/components/slider/Slider.vue";
 import SliderItem from "@/components/slider/SliderItem.vue";
-import { ElMessageBox, ElInput } from "element-plus";
+import {
+  ElMessageBox,
+  ElInput,
+  ElDialog,
+  ElSelect,
+  ElOption,
+} from "element-plus";
 import { Plus, Lock, Edit } from "@element-plus/icons";
 import { cloneDeep, findIndex } from "lodash";
 import axios from "axios";
@@ -144,6 +177,9 @@ export default defineComponent({
     Slider,
     SliderItem,
     ElInput,
+    ElDialog,
+    ElSelect,
+    ElOption,
   },
   setup() {
     const drawer = ref(false);
@@ -158,16 +194,7 @@ export default defineComponent({
     };
     let disableNextAdd = ref(true);
     let list = reactive({
-      data: [
-        {
-          id: 0,
-          title: "hello world",
-          img: "https://picsum.photos/id/0/300/180",
-          complete: false,
-          date: null,
-          detail: "",
-        },
-      ] as any[],
+      data: [] as any[],
     });
     const idx = list.data.length > 0 ? list.data[list.data.length - 1].id : 0;
     let form = reactive({
@@ -230,6 +257,9 @@ export default defineComponent({
     });
 
     let isOverlay = ref(false);
+    let dialog = ref(true);
+    let genNum = ref(10);
+    let genOptions = reactive([10, 20, 50, 100]);
 
     return {
       list,
@@ -249,6 +279,9 @@ export default defineComponent({
       Edit,
       compRate,
       isOverlay,
+      dialog,
+      genNum,
+      genOptions,
       ...toRefs(state),
     };
   },
@@ -256,6 +289,12 @@ export default defineComponent({
     this.lock = Boolean(this.list.data.length > 0);
   },
   methods: {
+    generateAll() {
+      for (let i = 0; i < this.genNum; i++) {
+        this.handleGenerate();
+      }
+      this.dialog = false;
+    },
     setDrawer(mode: string, title: string) {
       this.drawerTitle = title;
       this.drawer = true;
@@ -271,22 +310,28 @@ export default defineComponent({
       this.form.img = img;
     },
     handleGenerate() {
-      this.isOverlay = true;
+      let picId = Math.floor(Math.random() * 300);
       axios
         .get("https://www.boredapi.com/api/activity")
         .then((res) => {
-          let item = {
-            id: this.form.id + 1,
-            title: res.data.activity as string,
-            img: `https://picsum.photos/300/180?random=${this.form.id + 1}`,
-            complete: false,
-            date: null,
-            detail: "",
-          };
-          this.list.data.push(item);
-          this.resetForm();
-          this.isOverlay = false;
-          this.drawer = false;
+          axios
+            .get(`https://picsum.photos/id/${picId}/300/180`)
+            .catch((err) => {
+              picId = 0;
+            })
+            .finally(() => {
+              let item = {
+                id: this.form.id + 1,
+                title: res.data.activity as string,
+                img: `https://picsum.photos/id/${picId}/300/180`,
+                complete: false,
+                date: null,
+                detail: "",
+              };
+              this.list.data.push(item);
+              this.resetForm();
+              this.drawer = false;
+            });
         })
         .catch((err) => {
           console.log(err);
@@ -298,7 +343,7 @@ export default defineComponent({
     },
     handleView(item: any) {
       this.setForm(item);
-      this.setDrawer("complete", `View Item: ${item.title}`);
+      this.setDrawer("view", `View Item: ${item.title}`);
     },
     handleAdd() {
       this.resetForm();
@@ -320,16 +365,25 @@ export default defineComponent({
         this.handleEdit(item);
       }
     },
+    handleDelete(id: number) {
+      const idx = findIndex(this.list.data, (x) => x.id === id);
+      if (idx === -1) return;
+      this.list.data.splice(idx, 1);
+    },
     handleClose(done: any) {
-      ElMessageBox.confirm("Are you sure you want to close this?")
-        .then(() => {
-          done();
-          this.loaderReset();
-          this.sliderReset();
-        })
-        .catch(() => {
-          // catch error
-        });
+      if (this.form.complete) {
+        done();
+      } else {
+        ElMessageBox.confirm("Are you sure you want to close this?")
+          .then(() => {
+            done();
+            this.loaderReset();
+            this.sliderReset();
+          })
+          .catch(() => {
+            // catch error
+          });
+      }
     },
     handleInput(val: [string, number]) {
       this.disableNextAdd = Boolean(val.toString().length === 0);
@@ -387,6 +441,7 @@ export default defineComponent({
 <style lang="scss" scoped>
 .page {
   position: relative;
+  margin-bottom: 100px;
   &__items {
     display: flex;
     justify-content: center;
@@ -431,11 +486,21 @@ export default defineComponent({
     margin-bottom: 10px;
     &__bar {
       position: absolute;
+      transition-duration: 0.3s;
       bottom: 0;
       left: 0;
       width: 100%;
       height: 10px;
-      background-color: #ccc;
+      overflow: hidden;
+      &:after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100%;
+        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      }
     }
     &__lock {
       margin-left: auto;
@@ -450,12 +515,92 @@ export default defineComponent({
       }
     }
   }
+  &__dialog {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    &__block {
+      flex: 1;
+      height: 30vh;
+      min-width: 300px;
+      margin: 10px 20px;
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+      border-radius: 20px;
+      &__inner {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin: 20px;
+        height: calc(100% - 40px);
+        box-sizing: border-box;
+        border-radius: 10px;
+        background-color: #fff;
+        padding: 0px 30px;
+        transition-duration: 00.3s;
+        cursor: pointer;
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.8);
+        }
+        & span {
+          margin: 10px;
+          font-size: 32px;
+        }
+      }
+    }
+    &--right {
+      animation-delay: -5s;
+    }
+  }
+  &__overlay {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 5000;
+  }
 }
 ::v-deep .el-input__inner {
   height: auto;
+  text-align: center;
+  font-size: 24px;
 }
 ::v-deep .el-drawer__body {
   overflow-y: auto;
   padding: 0;
+}
+
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.5s ease;
+}
+.slide-fade-enter, .slide-fade-leave-to
+/* .slide-fade-leave-active below version 2.1.8 */ {
+  transform: translateX(50px);
+  opacity: 0;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes loading {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>
