@@ -1,13 +1,17 @@
 <template>
   <div class="image" @click="handleClick">
+    <!-- 圖片 -->
     <img :src="props.url" alt="" />
+    <!-- 遮罩 -->
     <div
       :class="{
         'is-check': props.checked || isCheck,
       }"
       class="image__cover"
     >
+      <!-- 遮罩 -->
       <div class="image__cover__item"></div>
+      <!-- icon -->
       <div class="image__cover__item image__cover__check">
         <div class="check-icon">
           <div class="bar bar--right">
@@ -27,10 +31,6 @@ import { defineComponent, ref, watch } from "vue";
 export default defineComponent({
   name: "Image",
   props: {
-    id: {
-      type: String,
-      default: "0",
-    },
     url: {
       type: String,
       defaule: "https://picsum.photos/id/0/300/180`",
@@ -42,8 +42,8 @@ export default defineComponent({
     checked: Boolean,
     resetFlag: Boolean,
   },
-  emits: ["select-image"],
   setup(props) {
+    // 是否選擇
     let isCheck = ref(false);
     watch(
       () => props.resetFlag,
@@ -55,19 +55,24 @@ export default defineComponent({
     );
     return {
       props,
+      // 是否選擇
       isCheck,
     };
   },
   methods: {
+    /**
+     * 處理點擊事件
+     */
     handleClick() {
       if (this.disable && !this.isCheck) {
         return;
       }
       this.isCheck = !this.isCheck;
-      const val = `https://picsum.photos/id/${this.props.id}/300/180`;
-      const add = this.isCheck ? true : false;
-      this.$emit("select-image", val, add);
+      this.$emit("select-image", this.props.url, this.isCheck);
     },
+    /**
+     * 重置
+     */
     reset() {
       this.isCheck = false;
     },

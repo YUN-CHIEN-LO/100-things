@@ -1,16 +1,19 @@
 <template>
   <div class="slider-item" ref="item" :style="setHeight">
+    <!-- 標題 -->
     <h1 v-if="props.title">{{ props.title }}</h1>
+    <!-- 插槽 -->
     <slot></slot>
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent, reactive } from "vue";
 export default defineComponent({
   name: "SliderItem",
   props: {
     title: String,
+    slider: Object as any,
   },
   setup(props) {
     let setHeight = reactive({ height: "100%" });
@@ -18,7 +21,7 @@ export default defineComponent({
   },
   mounted() {
     this.$nextTick(() => {
-      this.setHeight.height = `${this.$parent.$refs.slider.clientHeight}px`;
+      this.setHeight.height = `${this.props.slider.$el.clientHeight}px`;
     });
   },
 });

@@ -4,7 +4,6 @@
       <Image
         v-for="image in imageList.data"
         :key="image.id"
-        :id="image.id"
         :url="`https://picsum.photos/id/${image.id}/300/180`"
         :disable="disable"
         :checked="
@@ -43,11 +42,18 @@ export default defineComponent({
     },
   },
   setup(props) {
+    // 圖片段落
     let pageNum = ref(1);
-    let imageList = reactive({ data: [] as any[] });
-    let selectList = reactive({ data: [] as string[] });
+    // 是否禁用
     let disable = ref(false);
+    // 是否重置
     let resetFlag = ref(false);
+    // 圖片列表
+    let imageList = reactive({ data: [] as any[] });
+    // 已選擇的圖片
+    let selectList = reactive({ data: [] as string[] });
+
+    // 若選擇數量超過最大限制，禁用
     watch(
       () => selectList.data,
       (newVal, oldVal) => {
@@ -55,24 +61,33 @@ export default defineComponent({
       },
       { deep: true }
     );
+
+    // lodash includes 方法
     const includeLodash = (arr: any[], item: any) => {
       return includes(arr, item);
     };
     return {
       props,
+      // 圖片段落
       pageNum,
-      imageList,
-      selectList,
+      // 是否禁用
       disable,
-      includeLodash,
+      // 是否重置
       resetFlag,
+      // 圖片列表
+      imageList,
+      // 已選擇的圖片
+      selectList,
+      includeLodash,
     };
   },
-
   mounted() {
     this.getImagesApi();
   },
   methods: {
+    /**
+     * 取得圖片
+     */
     getImagesApi() {
       axios
         .get("https://picsum.photos/v2/list", {
@@ -81,6 +96,7 @@ export default defineComponent({
           },
         })
         .then((res) => {
+          // 延伸圖片列表
           this.imageList.data = concat(this.imageList.data, res.data);
           this.pageNum++;
         })
@@ -88,15 +104,28 @@ export default defineComponent({
           console.log(err);
         });
     },
+
+    /**
+     * 處理選擇動作
+     *
+     * @param {string} url - 圖片網址
+     * @param {boolean} add - 是否新增
+     */
     handleSelect(url: string, add: boolean) {
       this.resetFlag = false;
       if (add && !includes(this.selectList.data, url)) {
+        // 若新增並且選擇列表中尚未存在
         this.selectList.data.push(url);
       } else if (!add) {
+        // 移除選擇圖片
         remove(this.selectList.data, (x) => x === url);
       }
       this.$emit("select", this.selectList.data);
     },
+
+    /**
+     * 重置
+     */
     reset() {
       this.selectList.data = [];
       this.resetFlag = true;
@@ -104,3 +133,11 @@ export default defineComponent({
   },
 });
 </script>
+
+<style lang="scss" scoped>
+.loader {
+  &__tool {
+    margin: 30px 0px;
+  }
+}
+</style>

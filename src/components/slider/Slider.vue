@@ -1,105 +1,119 @@
 <template>
   <div class="slider" ref="slider" :style="{ height: props.height }">
+    <!-- 滑頁表格的頁面插槽 -->
     <div class="slider__content" :style="setSlide" ref="sliderContent">
       <slot></slot>
     </div>
+    <!-- 遮罩 -->
     <div class="slider__overlay" :class="{ 'is-end__overlay': isEnd }"></div>
+    <!-- 上一頁按鈕 -->
     <div class="slider__btn slider__btn--prev" @click="handleSlide(-1)">
-      <i class="el-icon" data-v-066465b6="" style="--font-size: 32px"
-        ><svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 1024 1024"
-          data-v-066465b6=""
-        >
-          <path
-            fill="currentColor"
-            d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
-          ></path>
-          <path
-            fill="currentColor"
-            d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
-          ></path></svg
-      ></i>
+      <el-icon :size="32"><back /></el-icon>
     </div>
-
+    <!-- 下一頁按鈕 -->
     <div
       class="slider__btn slider__btn--next"
       :class="{ 'is-end': isEnd, 'is-disabled': disableNext }"
       @click="handleSlide(1)"
     >
-      <i class="el-icon" data-v-066465b6="" style="--font-size: 32px"
-        ><svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 1024 1024"
-          data-v-066465b6=""
-        >
-          <path
-            fill="currentColor"
-            d="M754.752 480H160a32 32 0 1 0 0 64h594.752L521.344 777.344a32 32 0 0 0 45.312 45.312l288-288a32 32 0 0 0 0-45.312l-288-288a32 32 0 1 0-45.312 45.312L754.752 480z"
-          ></path></svg
-      ></i>
+      <el-icon :size="32"><right /></el-icon>
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent, computed, ref } from "vue";
+import { ElIcon } from "element-plus";
+import { Back, Right } from "@element-plus/icons";
 export default defineComponent({
   name: "Slider",
+  components: { ElIcon, Back, Right },
   props: {
+    // 設定高度
     height: {
       type: String,
       default: "100%",
     },
+    // 是否禁用下一頁按鈕
     disableNext: {
       type: Boolean,
       default: false,
     },
   },
   setup(props) {
+    // 當前頁碼
     const num = ref(0);
+    // 是否到達最後一頁
     const isEnd = ref(false);
+    // 換頁動畫：計算頁位置
     const setSlide = computed(() => {
       return {
         transform: `translateX(-${100 * num.value}%)`,
       };
     });
+    // $refs
+    const sliderContent = ref(null as any);
     return {
       props,
+      // 當前頁碼
       num,
-      setSlide,
+      // 是否到達最後一頁
       isEnd,
+      // 換頁動畫：計算頁位置
+      setSlide,
+      // $refs
+      sliderContent,
     };
   },
   methods: {
-    handleSlide(step) {
+    /**
+     * 換頁
+     *
+     * @param {number} step - 上一頁(1)或下一頁(-1)
+     */
+    handleSlide(step: number) {
+      // 進入下一頁時，預設不能再進入下一頁
       if (step === 1 && this.disableNext) {
         return;
       }
+
+      // 離開 submit 狀態
       if (step === -1 && this.isEnd) {
         this.isEnd = false;
         return;
       }
+
+      // submit 狀態
       if (this.isEnd) {
         this.$emit("slider:submit");
         this.reset();
         return;
       }
+
+      // 到首頁
       if (this.num + step < 0) {
         this.$emit("slider", "start");
         return;
       }
-      if (this.num + step === this.$refs.sliderContent.children.length) {
+
+      // 到末頁
+      if (this.num + step === this.sliderContent.children.length) {
         this.$emit("slider", "end");
         this.isEnd = true;
         return;
       }
+
+      // 正常切換頁
       if (!this.isEnd) {
         this.num += step;
       }
       this.$emit("slider", this.num);
       this.isEnd = false;
     },
+
+    /**
+     * 重設 slider
+     */
     reset() {
       this.isEnd = false;
       this.num = 0;
