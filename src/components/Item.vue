@@ -173,7 +173,7 @@ export default defineComponent({
       margin: 10px;
       color: #fff;
       @include centerFlex();
-      word-break: break-all;
+      white-space: normal;
     }
   }
   &__edit,

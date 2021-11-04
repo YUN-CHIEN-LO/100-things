@@ -1,6 +1,10 @@
 <template>
   <div class="page">
     <div class="page__tool">
+      <div
+        class="page__tool__bar"
+        :style="{ width: `${(compRate / list.data.length) * 100}%` }"
+      ></div>
       <div class="page__tool__lock">
         <el-switch
           v-model="lock"
@@ -24,7 +28,6 @@
       />
       <Item v-show="!lock" :lock="true" @click="handleAdd" />
     </div>
-    <!-- 新增項目 -->
     <el-drawer
       v-model="drawer"
       :title="drawerTitle"
@@ -35,6 +38,7 @@
       <Slider
         ref="slider"
         :disable-next="disableNextAdd"
+        :is-overlay="isOverlay"
         @slider:submit="handleSubmit"
         @slider="handleSlide"
       >
@@ -46,10 +50,16 @@
           <el-input
             v-model="form.title"
             :input-style="inputStyle"
-            maxlength="30"
             show-word-limit
             @input="handleInput"
           ></el-input>
+          <el-button
+            v-if="mode === 'add'"
+            type="info"
+            style="margin-top: 10px"
+            @click="handleGenerate"
+            >Generate A Random Item !</el-button
+          >
         </SliderItem>
         <SliderItem
           v-if="mode === 'add' || mode === 'edit'"
@@ -125,6 +135,7 @@ import SliderItem from "@/components/slider/SliderItem.vue";
 import { ElMessageBox, ElInput } from "element-plus";
 import { Plus, Lock, Edit } from "@element-plus/icons";
 import { cloneDeep, findIndex } from "lodash";
+import axios from "axios";
 export default defineComponent({
   name: "Home",
   components: {
@@ -173,6 +184,7 @@ export default defineComponent({
         fontSize: "32px",
         padding: "20px",
         marginTop: "20px",
+        width: "80%",
       };
     });
 
@@ -209,6 +221,16 @@ export default defineComponent({
       ],
     });
 
+    const compRate = computed(() => {
+      let count = 0;
+      list.data.forEach((x) => {
+        if (x.complete) count++;
+      });
+      return count;
+    });
+
+    let isOverlay = ref(false);
+
     return {
       list,
       drawer,
@@ -225,6 +247,8 @@ export default defineComponent({
       inactive,
       mode,
       Edit,
+      compRate,
+      isOverlay,
       ...toRefs(state),
     };
   },
@@ -246,6 +270,28 @@ export default defineComponent({
       this.form.complete = complete;
       this.form.img = img;
     },
+    handleGenerate() {
+      this.isOverlay = true;
+      axios
+        .get("https://www.boredapi.com/api/activity")
+        .then((res) => {
+          let item = {
+            id: this.form.id + 1,
+            title: res.data.activity as string,
+            img: `https://picsum.photos/300/180?random=${this.form.id + 1}`,
+            complete: false,
+            date: null,
+            detail: "",
+          };
+          this.list.data.push(item);
+          this.resetForm();
+          this.isOverlay = false;
+          this.drawer = false;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
     handleComplete(item: any) {
       this.setForm(item);
       this.setDrawer("complete", `Complete Item: ${item.title}`);
@@ -261,6 +307,7 @@ export default defineComponent({
     handleEdit(item: any) {
       this.setForm(item);
       this.setDrawer("edit", "Edit Item Setting");
+      this.disableNextAdd = false;
     },
     handleItem(item: any) {
       if (this.lock) {
@@ -307,7 +354,6 @@ export default defineComponent({
       this.drawer = false;
       const item = cloneDeep(this.form);
       const idx = findIndex(this.list.data, (x) => x.id === item.id);
-      console.log(this.list.data);
       if (this.mode === "add" || this.mode === "edit") {
         if (idx === -1) {
           this.list.data.push(item);
@@ -315,11 +361,9 @@ export default defineComponent({
           this.list.data[idx] = item;
         }
       } else if (this.mode === "complete") {
-        console.log(idx);
         if (idx !== -1) {
           this.list.data[idx] = item;
           this.list.data[idx].complete = true;
-          console.log(item);
         }
       }
       this.resetForm();
@@ -384,6 +428,15 @@ export default defineComponent({
     overflow: hidden;
     display: flex;
     z-index: 20;
+    margin-bottom: 10px;
+    &__bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 10px;
+      background-color: #ccc;
+    }
     &__lock {
       margin-left: auto;
       height: 50px;
