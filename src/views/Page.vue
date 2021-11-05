@@ -21,7 +21,7 @@
     </div>
 
     <!-- 項目 -->
-    <div class="page__items">
+    <draggable :list="list" class="page__items" :disabled="lock">
       <!-- 一般項目 -->
       <Item
         v-for="(item, id) in list"
@@ -38,7 +38,7 @@
       />
       <!-- 新增項目 -->
       <Item :style="showAddItem" :lock="true" @click="itemAdd" />
-    </div>
+    </draggable>
     <!-- 表單 -->
     <el-drawer
       v-model="drawer"
@@ -193,6 +193,7 @@
 </template>
 
 <script lang="ts">
+import { VueDraggableNext } from "vue-draggable-next";
 import {
   defineComponent,
   reactive,
@@ -236,6 +237,7 @@ export default defineComponent({
     Loading,
     Plus,
     ArrowUp,
+    draggable: VueDraggableNext,
   },
   setup() {
     /* 維護項目 */
@@ -697,6 +699,9 @@ export default defineComponent({
     display: flex;
     z-index: 20;
     margin-bottom: 10px;
+    & h1 {
+      margin-left: 20px;
+    }
     &__bar {
       position: absolute;
       transition-duration: 0.3s;

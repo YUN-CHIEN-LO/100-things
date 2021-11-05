@@ -19,7 +19,10 @@ export default {
     MoreFilled,
   },
   props: {
-    isLock: Boolean,
+    isLock: {
+      type: Boolean,
+      default: true,
+    },
   },
   setup(props: any) {
     return {
