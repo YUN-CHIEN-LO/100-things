@@ -8,7 +8,7 @@ cd dist
 # 因為dist資料夾預設是被ignore的，因此在進入dist資料夾後初始化git
 git init
 git add -A
-git commit -m 'deploy version=$1'
-# 部署到 git@github.com:YUN-CHIEN-LO/100-things  分支為 gh-pages
+git commit -m "deploy v$1"
+# 部署到 git@github.com:<UserName>/<Repository>  分支為 gh-pages
 git push -f git@github.com:YUN-CHIEN-LO/100-things master:gh-pages
 cd -
