@@ -176,7 +176,7 @@
       </div>
     </el-dialog>
     <!-- 工具箱 -->
-    <tool-box :is-lock="lock">
+    <tool-box>
       <tool v-show="!lock" title="Add A Item !" @click="itemAdd">
         <plus />
       </tool>
@@ -681,9 +681,11 @@ export default defineComponent({
       width: 80%;
       display: flex;
       min-width: 300px;
+      flex-wrap: wrap;
       &__block {
         flex: 1;
         padding: 10px;
+        min-width: 300px;
       }
     }
   }
@@ -733,9 +735,9 @@ export default defineComponent({
     align-items: center;
     &__block {
       flex: 1;
-      height: 30vh;
+      height: 50%;
       min-width: 300px;
-      margin: 10px 20px;
+      margin: 5px 20px;
       @include setColor();
       border-radius: 20px;
       &__inner {
