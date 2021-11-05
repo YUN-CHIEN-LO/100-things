@@ -1,20 +1,14 @@
 <template>
   <div class="item" :class="{ 'is-edit': isEdit }">
+    <!-- 底圖 -->
     <div class="item__img">
+      <!-- 新增項目 -->
       <div v-if="props.url === ''" class="item__card item__default">
-        <i class="el-icon" data-v-066465b6="" style="--font-size: 64px"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 1024 1024"
-            data-v-066465b6=""
-          >
-            <path
-              fill="currentColor"
-              d="M480 480V128a32 32 0 0 1 64 0v352h352a32 32 0 1 1 0 64H544v352a32 32 0 1 1-64 0V544H128a32 32 0 0 1 0-64h352z"
-            ></path></svg
-        ></i>
+        <el-icon :size="64"> <plus /> </el-icon>
       </div>
+      <!-- 有色圖片 -->
       <img v-if="props.color" :src="props.url" alt="" />
+      <!-- 黑白圖片 -->
       <img v-if="!props.color" :src="props.url + '?grayscale&blur=5'" alt="" />
     </div>
     <div
@@ -22,62 +16,38 @@
       @mouseover="isEdit = true"
       @mouseleave="isEdit = false"
     >
+      <!-- 標題 -->
       <div class="item__card item__view">
         <div :style="titleFontSize" class="item__view__title">
           <span>{{ props.title }}</span>
         </div>
       </div>
+      <!-- 動作 -->
       <div class="item__card item__edit">
-        <i
-          v-show="!props.lock"
-          class="el-icon"
-          data-v-066465b6=""
-          style="--font-size: 64px"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 1024 1024"
-            data-v-066465b6=""
-          >
-            <path
-              fill="currentColor"
-              d="M600.704 64a32 32 0 0 1 30.464 22.208l35.2 109.376c14.784 7.232 28.928 15.36 42.432 24.512l112.384-24.192a32 32 0 0 1 34.432 15.36L944.32 364.8a32 32 0 0 1-4.032 37.504l-77.12 85.12a357.12 357.12 0 0 1 0 49.024l77.12 85.248a32 32 0 0 1 4.032 37.504l-88.704 153.6a32 32 0 0 1-34.432 15.296L708.8 803.904c-13.44 9.088-27.648 17.28-42.368 24.512l-35.264 109.376A32 32 0 0 1 600.704 960H423.296a32 32 0 0 1-30.464-22.208L357.696 828.48a351.616 351.616 0 0 1-42.56-24.64l-112.32 24.256a32 32 0 0 1-34.432-15.36L79.68 659.2a32 32 0 0 1 4.032-37.504l77.12-85.248a357.12 357.12 0 0 1 0-48.896l-77.12-85.248A32 32 0 0 1 79.68 364.8l88.704-153.6a32 32 0 0 1 34.432-15.296l112.32 24.256c13.568-9.152 27.776-17.408 42.56-24.64l35.2-109.312A32 32 0 0 1 423.232 64H600.64zm-23.424 64H446.72l-36.352 113.088-24.512 11.968a294.113 294.113 0 0 0-34.816 20.096l-22.656 15.36-116.224-25.088-65.28 113.152 79.68 88.192-1.92 27.136a293.12 293.12 0 0 0 0 40.192l1.92 27.136-79.808 88.192 65.344 113.152 116.224-25.024 22.656 15.296a294.113 294.113 0 0 0 34.816 20.096l24.512 11.968L446.72 896h130.688l36.48-113.152 24.448-11.904a288.282 288.282 0 0 0 34.752-20.096l22.592-15.296 116.288 25.024 65.28-113.152-79.744-88.192 1.92-27.136a293.12 293.12 0 0 0 0-40.256l-1.92-27.136 79.808-88.128-65.344-113.152-116.288 24.96-22.592-15.232a287.616 287.616 0 0 0-34.752-20.096l-24.448-11.904L577.344 128zM512 320a192 192 0 1 1 0 384 192 192 0 0 1 0-384zm0 64a128 128 0 1 0 0 256 128 128 0 0 0 0-256z"
-            ></path></svg
-        ></i>
-        <i
-          v-show="props.lock"
-          class="el-icon"
-          data-v-066465b6=""
-          style="--font-size: 64px"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 1024 1024"
-            data-v-066465b6=""
-          >
-            <path
-              v-show="!complete"
-              fill="currentColor"
-              d="M480 480V128a32 32 0 0 1 64 0v352h352a32 32 0 1 1 0 64H544v352a32 32 0 1 1-64 0V544H128a32 32 0 0 1 0-64h352z"
-            ></path>
-            <path
-              v-show="complete"
-              fill="currentColor"
-              d="M512 160c320 0 512 352 512 352S832 864 512 864 0 512 0 512s192-352 512-352zm0 64c-225.28 0-384.128 208.064-436.8 288 52.608 79.872 211.456 288 436.8 288 225.28 0 384.128-208.064 436.8-288-52.608-79.872-211.456-288-436.8-288zm0 64a224 224 0 1 1 0 448 224 224 0 0 1 0-448zm0 64a160.192 160.192 0 0 0-160 160c0 88.192 71.744 160 160 160s160-71.808 160-160-71.744-160-160-160z"
-            ></path>
-          </svg>
-        </i>
+        <!-- 編輯 -->
+        <el-icon v-show="!props.lock" :size="64"><setting /></el-icon>
+        <!-- 完成 -->
+        <el-icon v-show="props.lock && !complete" :size="64"><plus /></el-icon>
+        <!-- 檢視 -->
+        <el-icon v-show="props.lock && complete" :size="64"><View /></el-icon>
       </div>
     </div>
+    <!-- 工具列 -->
     <transition name="slide-fade">
       <div
         v-show="!props.lock"
         class="item__info"
         @click="(evt) => evt.stopPropagation()"
       >
+        <!-- 編號 -->
         <span>
           {{ props.sort }}
         </span>
-        <el-icon :size="18" @click="handleDelete(evt, props.id)"
+        <!-- 刪除 -->
+        <el-icon
+          :size="18"
+          class="item__info__delete"
+          @click="handleDelete(evt, props.id)"
           ><delete
         /></el-icon>
       </div>
@@ -86,13 +56,13 @@
 </template>
 
 <script lang="ts">
-import { Plus, Delete } from "@element-plus/icons";
+import { Plus, Delete, Setting, View } from "@element-plus/icons";
 import { defineComponent, ref, computed } from "vue";
 import { ElIcon, ElMessageBox } from "element-plus";
 
 export default defineComponent({
   name: "Item",
-  components: { Delete, ElIcon },
+  components: { ElIcon, Delete, Plus, Setting, View },
   props: {
     id: Number,
     url: {
@@ -116,12 +86,17 @@ export default defineComponent({
   },
   setup(props) {
     let isEdit = ref(false);
-
+    // 設定字體大小
     const titleFontSize = computed(() => {
       const len = props.title.length;
-      if (len < 15) {
+      if (len < 10) {
         return {
           fontSize: "48px",
+        };
+      }
+      if (len < 20) {
+        return {
+          fontSize: "32px",
         };
       }
       return {
@@ -130,12 +105,17 @@ export default defineComponent({
     });
     return {
       props,
-      Plus,
       isEdit,
       titleFontSize,
     };
   },
   methods: {
+    /**
+     * 處理刪除動作
+     *
+     * @param {object} evt - event
+     * @param {number} id - id
+     */
     handleDelete(evt: any, id: number) {
       ElMessageBox.confirm("Are you sure you want to delete this?", {
         confirmButtonText: "Delete",
@@ -152,23 +132,6 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@mixin center() {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-}
-@mixin centerFlex() {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-@mixin fill() {
-  width: 100%;
-  height: 100%;
-}
 .item {
   width: 300px;
   height: 180px;
@@ -176,8 +139,7 @@ export default defineComponent({
   position: relative;
   overflow: hidden;
   margin: 5px;
-  transition-duration: 0.3s;
-
+  transition-duration: 0.5s;
   &__content {
     @include fill();
     transition-duration: 0.3s;
@@ -193,9 +155,10 @@ export default defineComponent({
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+    @include setColor();
+    &__delete {
+      cursor: pointer;
+    }
   }
   &__card {
     position: relative;
@@ -203,9 +166,7 @@ export default defineComponent({
     @include centerFlex();
   }
   &__img {
-    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+    @include setColor();
     @include center();
     filter: contrast(80%);
     transition-duration: 0.5s;
@@ -241,18 +202,6 @@ export default defineComponent({
   }
   & .item__img {
     filter: contrast(80%) brightness(50%);
-  }
-}
-
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
   }
 }
 

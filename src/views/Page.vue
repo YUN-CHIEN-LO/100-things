@@ -5,8 +5,9 @@
       <!-- 進度條 -->
       <div
         class="page__tool__bar"
-        :style="{ width: `${(compRate / list.length) * 100}%` }"
+        :style="{ width: `${setPercentage(compRate, list.length)}` }"
       ></div>
+      <h1>{{ setPercentage(compRate, list.length) }}</h1>
       <!-- 編輯/檢視模式 -->
       <div class="page__tool__lock">
         <el-switch
@@ -36,11 +37,7 @@
         @item:delete="handleDelete"
       />
       <!-- 新增項目 -->
-      <Item
-        :style="{ width: lock ? '0' : '300px' }"
-        :lock="true"
-        @click="itemAdd"
-      />
+      <Item :style="showAddItem" :lock="true" @click="itemAdd" />
     </div>
     <!-- 表單 -->
     <el-drawer
@@ -73,7 +70,7 @@
             v-if="mode === 'add'"
             type="info"
             style="margin-top: 10px"
-            @click="generate"
+            @click="autoStart(1)"
             >Generate A Random Item !</el-button
           >
         </SliderItem>
@@ -146,7 +143,7 @@
       <div class="page__dialog">
         <!-- 自動產生 -->
         <div class="page__dialog__block">
-          <div class="page__dialog__block__inner" @click="autoStart">
+          <div class="page__dialog__block__inner" @click="autoStart(genNum)">
             <span>Generate For Me!</span>
             <el-select
               v-model="genNum"
@@ -178,17 +175,38 @@
         </div>
       </div>
     </el-dialog>
+    <!-- 工具箱 -->
+    <tool-box :is-lock="lock">
+      <tool v-show="!lock" title="Add A Item !" @click="itemAdd">
+        <plus />
+      </tool>
+      <tool title="Back To Top !" @click="backToTop"><arrow-up /></tool>
+    </tool-box>
     <!-- 遮罩 -->
-    <div :class="{ page__overlay: isOverlay }"></div>
+    <div v-show="isOverlay" class="page__overlay">
+      <el-icon class="page__overlay__icon" :size="64">
+        <loading />
+      </el-icon>
+      <h1 v-if="genNum > 0">{{ setPercentage(list.length, genNum) }}</h1>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, ref, computed, toRefs } from "vue";
+import {
+  defineComponent,
+  reactive,
+  ref,
+  computed,
+  toRefs,
+  shallowRef,
+} from "vue";
 import Loader from "@/components/load-image/Loader.vue";
 import Item from "@/components/Item.vue";
 import Slider from "@/components/slider/Slider.vue";
 import SliderItem from "@/components/slider/SliderItem.vue";
+import ToolBox from "@/components/tool-box/ToolBox.vue";
+import Tool from "@/components/tool-box/Tool.vue";
 import {
   ElMessageBox,
   ElInput,
@@ -197,7 +215,7 @@ import {
   ElOption,
   ElIcon,
 } from "element-plus";
-import { Plus, Lock, Edit } from "@element-plus/icons";
+import { Plus, Lock, Edit, Loading, ArrowUp } from "@element-plus/icons";
 import { cloneDeep, findIndex } from "lodash";
 import axios from "axios";
 export default defineComponent({
@@ -207,12 +225,17 @@ export default defineComponent({
     Item,
     Slider,
     SliderItem,
+    ToolBox,
+    Tool,
     ElInput,
     ElDialog,
     ElSelect,
     ElOption,
     ElIcon,
     Edit,
+    Loading,
+    Plus,
+    ArrowUp,
   },
   setup() {
     /* 維護項目 */
@@ -222,12 +245,12 @@ export default defineComponent({
     // 初始指標項目
     const idx = list.length > 0 ? list[list.length - 1].id : 0;
     let form = reactive({
-      id: idx as number,
-      title: "" as string,
-      img: "" as string,
-      complete: false as boolean,
-      date: null as any,
-      detail: "" as string,
+      id: idx,
+      title: "",
+      img: "",
+      complete: false,
+      date: "",
+      detail: "",
     });
 
     /* 工具列與全局變數 */
@@ -247,10 +270,13 @@ export default defineComponent({
       disableNextAdd: true as boolean,
       // 鎖定模式
       lock: false as boolean,
-      // switch icon
-      active: Lock as any,
-      inactive: Plus as any,
+      // scroll
+      isScroll: 0 as number,
     });
+
+    // switch icon
+    const active = shallowRef(Lock as any);
+    const inactive = shallowRef(Plus as any);
 
     // 選擇圖片重置 callback
     const loader = ref(null as any);
@@ -298,8 +324,8 @@ export default defineComponent({
 
     /* 起始設定 */
     const startSetting = reactive({
-      genNum: 10 as number,
-      genOptions: [10, 20, 50, 100] as number[],
+      genNum: 5 as number,
+      genOptions: [5, 10, 20, 50, 100] as number[],
     });
 
     /* Computed */
@@ -323,6 +349,28 @@ export default defineComponent({
       return count;
     });
 
+    // 顯示新增項目
+    const showAddItem = computed(() => {
+      return tools.lock || list.length > 0
+        ? {
+            width: "0px",
+          }
+        : {
+            width: "300px",
+          };
+    });
+
+    /**
+     * 計算百分比
+     *
+     * @param {number} child - 分子
+     * @param {number} parent - 分母
+     */
+    const setPercentage = function (child: number, parent: number) {
+      if (!parent) return "0%";
+      return `${Math.round((child / parent) * 100)}%`;
+    };
+
     return {
       list,
       form,
@@ -332,24 +380,43 @@ export default defineComponent({
       sliderReset,
       inputStyle,
       compRate,
+      showAddItem,
+      active,
+      inactive,
       ...toRefs(tools),
       ...toRefs(startSetting),
       ...toRefs(completeForm),
+      setPercentage,
     };
   },
   mounted() {
     // 若list為空，則不鎖定
     this.lock = Boolean(this.list.length > 0);
+    // 掛載監聽事件
+    this.$nextTick(() => {
+      window.document.addEventListener("scroll", this.onScroll);
+    });
   },
   methods: {
     /**
      * 自動起始
+     *
+     * @param {number} num - 要產生的項目數量
      */
-    autoStart() {
-      for (let i = 0; i < this.genNum; i++) {
-        this.generate();
+    autoStart(num: number) {
+      let scheduled = [];
+      for (let i = 0; i < num; i++) {
+        scheduled.push(this.generate());
       }
+      this.isOverlay = true;
       this.dialog = false;
+      Promise.all(scheduled).then((res) => {
+        const timer = setTimeout(() => {
+          this.isOverlay = false;
+          this.genNum = 0;
+          clearTimeout(timer);
+        }, 500);
+      });
     },
     /**
      * 手動起始
@@ -364,8 +431,15 @@ export default defineComponent({
      * @param {object} item - 被點擊的項目
      */
     handleItem(item: any) {
-      // 拷貝至指標項目
-      this.form = cloneDeep(item);
+      // 賦值至指標項目
+      const { id, title, img, date, detail, complete } = item;
+      this.form.id = id;
+      this.form.title = title;
+      this.form.img = img;
+      this.form.date = date;
+      this.form.detail = detail;
+      this.form.complete = complete;
+
       // 分流動作
       if (this.lock) {
         if (item.complete) {
@@ -499,7 +573,7 @@ export default defineComponent({
         this.form.id = id + 1;
         this.form.title = "";
         this.form.img = "";
-        this.form.date = null;
+        this.form.date = "";
         this.form.detail = "";
         this.form.complete = false;
       });
@@ -508,13 +582,13 @@ export default defineComponent({
     /**
      * 自動產生項目
      */
-    generate() {
-      // 亂數圖片id
-      let picId = Math.floor(Math.random() * 300);
+    async generate() {
       // 取得項目標題
-      axios
+      await axios
         .get("https://www.boredapi.com/api/activity")
         .then((res) => {
+          // 亂數圖片id
+          let picId = Math.floor(Math.random() * 300);
           // 檢查圖片是否存在
           axios
             .get(`https://picsum.photos/id/${picId}/300/180`)
@@ -523,13 +597,15 @@ export default defineComponent({
               picId = 0;
             })
             .finally(() => {
+              // 重置表單
+              this.resetForm();
               // 新增項目
               this.list.push({
-                id: this.form.id + 1,
+                id: this.form.id,
                 title: res.data.activity as string,
                 img: `https://picsum.photos/id/${picId}/300/180`,
                 complete: false,
-                date: null,
+                date: "",
                 detail: "",
               });
               // 關閉drawer
@@ -553,6 +629,23 @@ export default defineComponent({
       this.drawerTitle = title;
       this.drawer = true;
     },
+    /**
+     * 當 scroll 時，更新 isScroll 狀態
+     */
+    onScroll() {
+      this.isScroll = Math.floor(
+        window.pageYOffset !== undefined
+          ? window.pageYOffset
+          : (
+              document.documentElement ||
+              document.body.parentNode ||
+              document.body
+            ).scrollTop
+      );
+    },
+    backToTop() {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
   },
 });
 </script>
@@ -562,10 +655,9 @@ export default defineComponent({
   position: relative;
   margin-bottom: 100px;
   &__items {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    @include centerFlex();
     flex-wrap: wrap;
+    position: relative;
   }
   &__form {
     &__title {
@@ -618,7 +710,7 @@ export default defineComponent({
         left: 0;
         width: 100vw;
         height: 100%;
-        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+        @include setColor();
       }
     }
     &__lock {
@@ -626,9 +718,7 @@ export default defineComponent({
       height: 50px;
       padding: 10px;
       width: 200px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      @include centerFlex();
       & * {
         transform: scale(2);
       }
@@ -646,21 +736,18 @@ export default defineComponent({
       height: 30vh;
       min-width: 300px;
       margin: 10px 20px;
-      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-      background-size: 400% 400%;
-      animation: gradient 15s ease infinite;
+      @include setColor();
       border-radius: 20px;
       &__inner {
-        display: flex;
+        @include centerFlex();
         flex-direction: column;
-        justify-content: center;
         margin: 20px;
         height: calc(100% - 40px);
         box-sizing: border-box;
         border-radius: 10px;
         background-color: #fff;
         padding: 0px 30px;
-        transition-duration: 00.3s;
+        transition-duration: 0.3s;
         cursor: pointer;
         &:hover {
           background-color: rgba(255, 255, 255, 0.3);
@@ -669,6 +756,7 @@ export default defineComponent({
         & span {
           margin: 10px;
           font-size: 32px;
+          word-break: break-word;
         }
       }
     }
@@ -682,8 +770,14 @@ export default defineComponent({
     height: 100vh;
     top: 0;
     left: 0;
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.5);
     z-index: 5000;
+    @include centerFlex();
+    flex-direction: column;
+    color: #fff;
+    &__icon {
+      animation: loading 3s linear infinite;
+    }
   }
 }
 ::v-deep .el-input__inner {
@@ -695,18 +789,6 @@ export default defineComponent({
 ::v-deep .el-drawer__body {
   overflow-y: auto;
   padding: 0;
-}
-
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
 }
 
 @keyframes loading {

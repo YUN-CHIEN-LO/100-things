@@ -131,9 +131,7 @@ export default defineComponent({
     width: 100px;
     height: 100px;
     background-color: rgba(0, 0, 0, 0.2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    @include centerFlex();
     transform: translate(-50%, -50%) rotate(45deg);
     position: absolute;
     top: 50%;
@@ -168,9 +166,7 @@ export default defineComponent({
   transition-duration: 0.3s;
   width: 150px;
   height: 150px;
-  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-  background-size: 400% 400%;
-  animation: gradient 30s linear infinite;
+  @include setColor();
   box-shadow: 10px 10px rgba(0, 0, 0, 0.5);
   & .el-icon {
     transform: scale(0);
@@ -223,17 +219,6 @@ export default defineComponent({
   &:hover {
     background-color: #efefef;
     color: #aaa;
-  }
-}
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
   }
 }
 @keyframes loading {
